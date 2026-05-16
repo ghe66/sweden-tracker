@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sweden Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --se: #006AA7;
+    --it: #009246;
+    --de: #c9a800;
+    --es: #c60b1e;
+    --ot: #8B8B8B;
+    --se-impl: #b8d9ee;
+    --bg: #F7F4EF;
+    --surface: #FFFFFF;
+    --text: #1A1A1A;
+    --muted: #999;
+    --border: #E0DBD3;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 2rem;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── Backup buttons (subtle, top right) ── */
+  .backup-btns {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .backup-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 5px 11px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .backup-btn:hover { border-color: var(--text); color: var(--text); }
+
+  /* ── Sweden-until strip ── */
+  .se-strip {
+    background: #EDF5FB;
+    border: 1.5px solid #c2ddef;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .se-strip .lbl {
+    font-size: 0.68rem;
+    color: var(--se);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .se-strip input[type="date"] {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    border: 1.5px solid #c2ddef;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--se);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .se-strip input[type="date"]:focus { border-color: var(--se); }
+
+  .se-strip .hint {
+    font-size: 0.66rem;
+    color: var(--se);
+    opacity: 0.65;
+  }
+
+  /* ── Year tabs ── */
+  .year-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+
+  .year-tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    padding: 6px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+
+  .year-tab.active { background: var(--text); border-color: var(--text); color: #fff; }
+  .year-tab:hover:not(.active) { border-color: var(--text); color: var(--text); }
+
+  /* ── Scoreboard ── */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .score-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px 10px;
+    text-align: center;
+    border-top: 3px solid transparent;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: transform 0.15s;
+  }
+
+  .score-card:hover { transform: translateY(-2px); }
+  .score-card.se { border-color: var(--se); }
+  .score-card.it { border-color: var(--it); }
+  .score-card.de { border-color: var(--de); }
+  .score-card.es { border-color: var(--es); }
+  .score-card.ot { border-color: var(--ot); }
+
+  .score-flag { font-size: 1.4rem; margin-bottom: 4px; }
+
+  .score-num {
+    font-family: 'Fraunces', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  .score-label { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .score-sub   { font-size: 0.56rem; color: var(--se-impl); margin-top: 3px; line-height: 1.3; }
+
+  /* ── Bar ── */
+  .year-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--border);
+    display: flex;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+
+  .bar-seg { height: 100%; transition: width 0.4s ease; min-width: 0; }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* ── Add panel ── */
+  .add-panel {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 28px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+
+  .mode-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    padding: 5px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+
+  .mode-btn.active { background: var(--text); border-color: var(--text); color: #fff; }
+
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 100px; }
+  .form-group label { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+  .form-group input, .form-group select {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    padding: 8px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .form-group input:focus, .form-group select:focus { border-color: var(--text); }
+
+  .add-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    padding: 9px 20px;
+    background: var(--text);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+    align-self: flex-end;
+  }
+
+  .add-btn:hover { opacity: 0.8; }
+
+  /* ── Calendar ── */
+  .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+
+  .cal-nav button {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .cal-nav button:hover { border-color: var(--text); }
+  .cal-month { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 300; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+
+  .cal-dow { font-size: 0.58rem; text-align: center; color: var(--muted); padding: 4px 0; letter-spacing: 0.06em; }
+
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.12s;
+    position: relative;
+  }
+
+  .cal-day:hover:not(.empty) { border-color: var(--text); }
+  .cal-day.empty { cursor: default; }
+
+  .cal-day.today::after {
+    content: '';
+    position: absolute;
+    bottom: 3px; left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--text);
+  }
+
+  .cal-day.se      { background: #E8F4FB; color: var(--se); }
+  .cal-day.it      { background: #E8F5EE; color: var(--it); }
+  .cal-day.de      { background: #FFFBEA; color: var(--de); }
+  .cal-day.es      { background: #FDEAEA; color: var(--es); }
+  .cal-day.ot      { background: #F0F0F0; color: #555; }
+  .cal-day.se-impl { background: #f0f7fc; color: var(--se-impl); font-style: italic; }
+
+  /* ── Country picker ── */
+  .cp-wrap { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+
+  .cp-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    padding: 5px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+
+  .cp-btn.active-se { background: #E8F4FB; border-color: var(--se); color: var(--se); }
+  .cp-btn.active-it { background: #E8F5EE; border-color: var(--it); color: var(--it); }
+  .cp-btn.active-de { background: #FFFBEA; border-color: var(--de); color: var(--de); }
+  .cp-btn.active-es { background: #FDEAEA; border-color: var(--es); color: var(--es); }
+  .cp-btn.active-ot { background: #F0F0F0; border-color: var(--ot); color: #555; }
+
+  /* ── Log ── */
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .log-item {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    border-left: 3px solid transparent;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .log-item.se { border-color: var(--se); }
+  .log-item.it { border-color: var(--it); }
+  .log-item.de { border-color: var(--de); }
+  .log-item.es { border-color: var(--es); }
+  .log-item.ot { border-color: var(--ot); }
+
+  .log-flag { font-size: 1.1rem; }
+  .log-info { flex: 1; }
+  .log-dates { font-size: 0.78rem; }
+  .log-meta  { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+  .del-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 0.9rem; color: var(--muted);
+    padding: 4px; border-radius: 4px;
+    transition: color 0.15s; opacity: 0.4;
+  }
+  .del-btn:hover { color: #c0392b; opacity: 1; }
+
+  .empty-state { text-align: center; padding: 30px; color: var(--muted); font-size: 0.78rem; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--text); color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    transition: transform 0.25s ease;
+    z-index: 200;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 440px) {
+    .scoreboard { grid-template-columns: repeat(3, 1fr); }
+    .score-num  { font-size: 1.4rem; }
+    .header     { flex-direction: column; }
+    .backup-btns { padding-top: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div>
+    <h1>Sweden Tracker</h1>
+    <p class="subtitle">Tax residency · <span id="lbl-year"></span></p>
+  </div>
+  <div class="backup-btns">
+    <button class="backup-btn" onclick="triggerImport()">↑ Import backup</button>
+    <button class="backup-btn" onclick="exportBackup()">↓ Export backup</button>
+    <input type="file" id="file-input" accept=".json" style="display:none" onchange="importBackup(event)">
+  </div>
+</div>
+
+<!-- Sweden-until -->
+<div class="se-strip">
+  <span class="lbl">🇸🇪 Sweden until</span>
+  <input type="date" id="se-until" onchange="onSeUntilChange()">
+  <span class="hint">Unregistered days up to this date count as Sweden</span>
+</div>
+
+<!-- Year tabs -->
+<div class="year-tabs" id="year-tabs"></div>
+
+<!-- Scoreboard -->
+<div class="scoreboard">
+  <div class="score-card se">
+    <div class="score-flag">🇸🇪</div>
+    <div class="score-num" id="cnt-se">0</div>
+    <div class="score-label">Sweden</div>
+    <div class="score-sub"  id="sub-se"></div>
+  </div>
+  <div class="score-card it"><div class="score-flag">🇮🇹</div><div class="score-num" id="cnt-it">0</div><div class="score-label">Italy</div></div>
+  <div class="score-card de"><div class="score-flag">🇩🇪</div><div class="score-num" id="cnt-de">0</div><div class="score-label">Germany</div></div>
+  <div class="score-card es"><div class="score-flag">🇪🇸</div><div class="score-num" id="cnt-es">0</div><div class="score-label">Spain</div></div>
+  <div class="score-card ot"><div class="score-flag">🌍</div><div class="score-num" id="cnt-ot">0</div><div class="score-label">Other</div></div>
+</div>
+
+<div class="year-bar">
+  <div class="bar-seg" style="background:var(--se)"      id="bar-se"></div>
+  <div class="bar-seg" style="background:var(--se-impl)" id="bar-se-impl"></div>
+  <div class="bar-seg" style="background:var(--it)"      id="bar-it"></div>
+  <div class="bar-seg" style="background:var(--de)"      id="bar-de"></div>
+  <div class="bar-seg" style="background:var(--es)"      id="bar-es"></div>
+  <div class="bar-seg" style="background:var(--ot)"      id="bar-ot"></div>
+</div>
+
+<!-- Add entry -->
+<p class="section-title">Add entry</p>
+<div class="add-panel">
+  <div class="mode-tabs">
+    <button class="mode-btn active" id="tab-range" onclick="setMode('range')">Date range</button>
+    <button class="mode-btn"        id="tab-cal"   onclick="setMode('cal')">Tap calendar</button>
+  </div>
+
+  <!-- Range form -->
+  <div id="range-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label>From</label>
+        <input type="date" id="from-date">
+      </div>
+      <div class="form-group">
+        <label>To</label>
+        <input type="date" id="to-date">
+      </div>
+      <div class="form-group">
+        <label>Country</label>
+        <select id="range-country">
+          <option value="se">🇸🇪 Sweden</option>
+          <option value="it">🇮🇹 Italy</option>
+          <option value="de">🇩🇪 Germany</option>
+          <option value="es">🇪🇸 Spain</option>
+          <option value="ot">🌍 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Note (opt.)</label>
+        <input type="text" id="range-note" placeholder="e.g. summer holiday">
+      </div>
+      <button class="add-btn" onclick="addRange()">Add</button>
+    </div>
+  </div>
+
+  <!-- Calendar tap -->
+  <div id="cal-form" style="display:none">
+    <div class="cp-wrap" id="cp"></div>
+    <div class="cal-nav">
+      <button onclick="calMove(-1)">← prev</button>
+      <span class="cal-month" id="cal-month-lbl"></span>
+      <button onclick="calMove(1)">next →</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+</div>
+
+<!-- Log -->
+<p class="section-title">Log — <span id="lbl-log-year"></span></p>
+<div class="log-list" id="log-list"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Constants ──
+const COUNTRIES = [
+  { key:'se', flag:'🇸🇪', name:'Sweden'  },
+  { key:'it', flag:'🇮🇹', name:'Italy'   },
+  { key:'de', flag:'🇩🇪', name:'Germany' },
+  { key:'es', flag:'🇪🇸', name:'Spain'   },
+  { key:'ot', flag:'🌍',  name:'Other'   },
+];
+
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+
+const LS_KEY = 'sweden-tracker-v1';
+
+// ── State ──
+let data        = { entries: [], swedenUntil: '' };
+let activeYear  = new Date().getFullYear();
+let mode        = 'range';
+let calYear     = new Date().getFullYear();
+let calMonth    = new Date().getMonth();
+let activeCp    = 'se';
+const todayStr  = new Date().toISOString().slice(0, 10);
+
+// ── localStorage ──
+function lsSave() {
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+}
+
+function lsLoad() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) data = JSON.parse(raw);
+  } catch {}
+  if (!data.entries)     data.entries     = [];
+  if (!data.swedenUntil) data.swedenUntil = todayStr;
+}
+
+// ── Backup export / import ──
+function triggerImport() { document.getElementById('file-input').click(); }
+
+function importBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!Array.isArray(parsed.entries)) throw new Error();
+      data = parsed;
+      if (!data.swedenUntil) data.swedenUntil = todayStr;
+      document.getElementById('se-until').value = data.swedenUntil;
+      lsSave();
+      renderAll();
+      showToast(`Restored ${data.entries.length} entr${data.entries.length !== 1 ? 'ies' : 'y'} from backup`);
+    } catch { showToast('Error: invalid backup file'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'sweden-tracker-data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup exported');
+}
+
+// ── Sweden-until ──
+function onSeUntilChange() {
+  data.swedenUntil = document.getElementById('se-until').value;
+  lsSave();
+  renderAll();
+}
+
+// ── Years ──
+function getYears() {
+  const s = new Set([new Date().getFullYear()]);
+  data.entries.forEach(e => {
+    s.add(new Date(e.from + 'T12:00:00').getFullYear());
+    s.add(new Date(e.to   + 'T12:00:00').getFullYear());
+  });
+  if (data.swedenUntil) s.add(new Date(data.swedenUntil + 'T12:00:00').getFullYear());
+  return [...s].sort((a, b) => b - a);
+}
+
+function renderYearTabs() {
+  document.getElementById('year-tabs').innerHTML = getYears().map(y =>
+    `<button class="year-tab ${y === activeYear ? 'active' : ''}" onclick="setYear(${y})">${y}</button>`
+  ).join('');
+}
+
+function setYear(y) {
+  activeYear = y;
+  document.getElementById('lbl-year').textContent     = y;
+  document.getElementById('lbl-log-year').textContent = y;
+  renderYearTabs(); renderScores(); renderLog(); renderCal();
+}
+
+// ── Day maps ──
+function buildExplicitMap() {
+  const map = {};
+  [...data.entries]
+    .sort((a, b) => new Date(a.from) - new Date(b.from))
+    .forEach(e => {
+      let d = new Date(e.from + 'T12:00:00');
+      const end = new Date(e.to + 'T12:00:00');
+      while (d <= end) {
+        map[d.toISOString().slice(0, 10)] = { country: e.country, id: e.id };
+        d.setDate(d.getDate() + 1);
+      }
+    });
+  return map;
+}
+
+function countDaysForYear(year) {
+  const exMap  = buildExplicitMap();
+  const capStr = data.swedenUntil || '';
+  const counts = { se: 0, it: 0, de: 0, es: 0, ot: 0 };
+  let seImpl   = 0;
+
+  const yStart = `${year}-01-01`;
+  const yEnd   = `${year}-12-31`;
+  const cap    = capStr < yEnd ? capStr : yEnd;
+
+  // Days Jan 1 → cap: explicit wins, else implicit Sweden
+  if (cap >= yStart) {
+    let d = new Date(yStart + 'T12:00:00');
+    const capD = new Date(cap + 'T12:00:00');
+    while (d <= capD) {
+      const ds = d.toISOString().slice(0, 10);
+      if (exMap[ds]) {
+        counts[exMap[ds].country]++;
+      } else {
+        counts.se++;
+        seImpl++;
+      }
+      d.setDate(d.getDate() + 1);
+    }
+  }
+
+  // Explicit entries beyond cap (no implicit Sweden there)
+  Object.entries(exMap).forEach(([ds, v]) => {
+    if (new Date(ds + 'T12:00:00').getFullYear() === year && ds > cap) {
+      counts[v.country]++;
+    }
+  });
+
+  return { counts, seImpl };
+}
+
+// ── Scores ──
+function renderScores() {
+  const { counts, seImpl } = countDaysForYear(activeYear);
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+
+  COUNTRIES.forEach(c => document.getElementById('cnt-' + c.key).textContent = counts[c.key]);
+
+  const seExplicit = counts.se - seImpl;
+  document.getElementById('bar-se').style.width      = (seExplicit / total * 100) + '%';
+  document.getElementById('bar-se-impl').style.width = (seImpl     / total * 100) + '%';
+  document.getElementById('bar-it').style.width      = (counts.it  / total * 100) + '%';
+  document.getElementById('bar-de').style.width      = (counts.de  / total * 100) + '%';
+  document.getElementById('bar-es').style.width      = (counts.es  / total * 100) + '%';
+  document.getElementById('bar-ot').style.width      = (counts.ot  / total * 100) + '%';
+
+  const subEl = document.getElementById('sub-se');
+  subEl.textContent = seImpl > 0 ? `${seExplicit} logged\n+ ${seImpl} assumed` : '';
+}
+
+// ── Log ──
+function renderLog() {
+  const list = document.getElementById('log-list');
+  const entries = data.entries
+    .filter(e => new Date(e.from + 'T12:00:00').getFullYear() === activeYear ||
+                 new Date(e.to   + 'T12:00:00').getFullYear() === activeYear)
+    .sort((a, b) => new Date(b.from) - new Date(a.from));
+
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty-state">No entries for this year yet.</div>';
+    return;
+  }
+
+  const ct = Object.fromEntries(COUNTRIES.map(x => [x.key, x]));
+  list.innerHTML = entries.map(e => {
+    const c    = ct[e.country];
+    const days = daysInRange(e.from, e.to);
+    const ds   = e.from === e.to ? fmt(e.from) : `${fmt(e.from)} → ${fmt(e.to)}`;
+    return `<div class="log-item ${e.country}">
+      <span class="log-flag">${c.flag}</span>
+      <div class="log-info">
+        <div class="log-dates">${c.name} · ${ds}</div>
+        <div class="log-meta">${days} day${days !== 1 ? 's' : ''}${e.note ? ' · ' + e.note : ''}</div>
+      </div>
+      <button class="del-btn" onclick="deleteEntry('${e.id}')" title="Delete">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Add ──
+function addRange() {
+  const from    = document.getElementById('from-date').value;
+  const to      = document.getElementById('to-date').value;
+  const country = document.getElementById('range-country').value;
+  const note    = document.getElementById('range-note').value.trim();
+  if (!from || !to) { showToast('Pick a date range'); return; }
+  if (from > to)    { showToast('From must be before To'); return; }
+  addEntry(from, to, country, note);
+  document.getElementById('range-note').value = '';
+}
+
+function addEntry(from, to, country, note = '') {
+  data.entries.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+    from, to, country, note
+  });
+  lsSave();
+  const y = new Date(from + 'T12:00:00').getFullYear();
+  if (y !== activeYear) { activeYear = y; setYear(y); } else renderAll();
+  const days = daysInRange(from, to);
+  showToast(`Added ${days} day${days !== 1 ? 's' : ''} in ${COUNTRIES.find(x => x.key === country).name}`);
+}
+
+function deleteEntry(id) {
+  data.entries = data.entries.filter(e => e.id !== id);
+  lsSave();
+  renderAll();
+}
+
+// ── Mode ──
+function setMode(m) {
+  mode = m;
+  document.getElementById('tab-range').classList.toggle('active', m === 'range');
+  document.getElementById('tab-cal').classList.toggle('active',   m === 'cal');
+  document.getElementById('range-form').style.display = m === 'range' ? '' : 'none';
+  document.getElementById('cal-form').style.display   = m === 'cal'   ? '' : 'none';
+  if (m === 'cal') { renderCpPicker(); renderCal(); }
+}
+
+// ── Country picker ──
+function renderCpPicker() {
+  document.getElementById('cp').innerHTML = COUNTRIES.map(c =>
+    `<button class="cp-btn ${activeCp === c.key ? 'active-' + c.key : ''}" onclick="setCp('${c.key}')">${c.flag} ${c.name}</button>`
+  ).join('');
+}
+
+function setCp(k) { activeCp = k; renderCpPicker(); }
+
+// ── Calendar ──
+function renderCal() {
+  if (mode !== 'cal') return;
+  document.getElementById('cal-month-lbl').textContent = `${MONTHS[calMonth]} ${calYear}`;
+
+  const exMap   = buildExplicitMap();
+  const capStr  = data.swedenUntil || '';
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const offset   = (firstDay + 6) % 7;
+  const dim      = new Date(calYear, calMonth + 1, 0).getDate();
+
+  let html = ['Mo','Tu','We','Th','Fr','Sa','Su'].map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < offset; i++) html += '<div class="cal-day empty"></div>';
+
+  for (let day = 1; day <= dim; day++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    let cc = '';
+    if      (exMap[ds])                    cc = exMap[ds].country;
+    else if (capStr && ds <= capStr) cc = 'se-impl';
+    html += `<div class="cal-day ${cc} ${ds === todayStr ? 'today' : ''}" onclick="calTap('${ds}')">${day}</div>`;
+  }
+
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function calTap(ds) {
+  const exMap = buildExplicitMap();
+  if (exMap[ds]?.country === activeCp) removeSingleDay(ds);
+  else addEntry(ds, ds, activeCp);
+}
+
+function removeSingleDay(ds) {
+  const toRemove = [], toAdd = [];
+  data.entries.forEach(e => {
+    if (ds >= e.from && ds <= e.to) {
+      toRemove.push(e.id);
+      if (e.from < ds) toAdd.push({ from: e.from,          to: offsetDay(ds,-1), country: e.country, note: e.note });
+      if (ds   < e.to) toAdd.push({ from: offsetDay(ds, 1), to: e.to,            country: e.country, note: e.note });
+    }
+  });
+  data.entries = data.entries.filter(e => !toRemove.includes(e.id));
+  toAdd.forEach(e => data.entries.push({ ...e, id: Date.now().toString(36) + Math.random().toString(36).slice(2) }));
+  lsSave();
+  renderAll();
+}
+
+function offsetDay(ds, delta) {
+  const d = new Date(ds + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+function calMove(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCal();
+}
+
+// ── Helpers ──
+function daysInRange(from, to) {
+  return Math.round((new Date(to + 'T12:00:00') - new Date(from + 'T12:00:00')) / 86400000) + 1;
+}
+
+function fmt(ds) {
+  return new Date(ds + 'T12:00:00').toLocaleDateString('sv-SE', { month: 'short', day: 'numeric' });
+}
+
+function renderAll() {
+  renderYearTabs(); renderScores(); renderLog(); renderCal();
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ── Init ──
+lsLoad();
+document.getElementById('from-date').value  = todayStr;
+document.getElementById('to-date').value    = todayStr;
+document.getElementById('se-until').value   = data.swedenUntil || todayStr;
+document.getElementById('lbl-year').textContent     = activeYear;
+document.getElementById('lbl-log-year').textContent = activeYear;
+renderAll();
+</script>
+</body>
+</html>
